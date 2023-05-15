@@ -1,0 +1,143 @@
+<?php
+
+namespace App\Entity;
+
+use Doctrine\ORM\Mapping as ORM;
+
+/**
+ * @ORM\Entity
+ * @ORM\Table(name="students")
+ */
+class Student
+{
+    /**
+     * @ORM\Id
+     * @ORM\GeneratedValue
+     * @ORM\Column(type="integer")
+     */
+    private $id;
+
+    /**
+     * @ORM\Column(type="string")
+     */
+    private $name;
+
+    /**
+     * @ORM\Column(type="string")
+     */
+    private $email;
+
+    // ... autres propriétés et méthodes
+
+    // Getter et setters pour les propriétés
+
+    public function getId(): ?int
+    {
+        return $this->id;
+    }
+
+    public function getName(): ?string
+    {
+        return $this->name;
+    }
+
+    public function setName(string $name): void
+    {
+        $this->name = $name;
+    }
+
+    public function getEmail(): ?string
+    {
+        return $this->email;
+    }
+
+    public function setEmail(string $email): void
+    {
+        $this->email = $email;
+    }
+}
+
+
+
+<?php
+
+namespace App\Controller;
+
+use App\Entity\Student;
+use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\Routing\Annotation\Route;
+
+class StudentController extends AbstractController
+{
+    /**
+     * @Route("/students", name="student_list")
+     */
+    public function index(): Response
+    {
+        $students = $this->getDoctrine()->getRepository(Student::class)->findAll();
+
+        return $this->render('student/index.html.twig', [
+            'students' => $students,
+        ]);
+    }
+
+    /**
+     * @Route("/students/create", name="student_create")
+     */
+    public function create(Request $request): Response
+    {
+        $student = new Student();
+
+        $form = $this->createFormBuilder($student)
+            ->add('name', TextType::class)
+            ->add('email', EmailType::class)
+            ->add('save', SubmitType::class, ['label' => 'Create Student'])
+            ->getForm();
+
+        $form->handleRequest($request);
+
+        if ($form->isSubmitted() && $form->isValid()) {
+            $entityManager = $this->getDoctrine()->getManager();
+            $entityManager->persist($student);
+            $entityManager->flush();
+
+            return $this->redirectToRoute('student_list');
+        }
+
+        return $this->render('student/create.html.twig', [
+            'form' => $form->createView(),
+        ]);
+    }
+
+    // ... autres actions pour la mise à jour, la suppression, etc.
+}
+
+
+{# templates/student/index.html.twig #}
+
+<h1>Student List</h1>
+
+<table>
+    <tr>
+        <th>ID</th>
+        <th>Name</th>
+        <th>Email</th>
+    </tr>
+    {% for student in students %}
+        <tr>
+            <td>{{ student.id }}</td>
+            <td>{{ student.name }}</td>
+            <td>{{ student.email }}</td>
+        </tr>
+    {% endfor %}
+</table>
+
+<hr>
+
+<a href="{{ path('student_create') }}">Create Student</a>
+
+
+
+
